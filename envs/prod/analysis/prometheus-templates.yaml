@@ -1,0 +1,72 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: error-rate-check
+spec:
+  metrics:
+    - name: error-rate
+      interval: 30s
+      count: 2
+      successCondition: result[0] <= 0.01
+      failureLimit: 2
+      provider:
+        prometheus:
+          address: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+          query: |
+            sum(rate(nginx_ingress_controller_requests{ingress="app",namespace="dev",status=~"5.."}[1m])) 
+            / 
+            sum(rate(nginx_ingress_controller_requests{ingress="app",namespace="dev"}[1m]))
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: latency-check
+spec:
+  metrics:
+    - name: latency-p95
+      interval: 30s
+      count: 2
+      successCondition: result[0] <= 0.5
+      failureLimit: 2
+      provider:
+        prometheus:
+          address: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+          query: |
+            histogram_quantile(
+              0.95,
+              sum by (le) (rate(http_request_duration_seconds_bucket{app="app",namespace="dev"}[1m]))
+            )
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: synthetic-check
+spec:
+  metrics:
+    - name: synthetic-test
+      count: 1
+      provider:
+        job:
+          spec:
+            template:
+              metadata:
+                labels:
+                  app: synthetic-check
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: check
+                    image: curlimages/curl:8.1.2
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - |
+                        set -e
+                        echo "Checking /healthz endpoint..."
+                        curl -fsS http://app.dev.svc.cluster.local/healthz
+                        
+                        echo "Checking / endpoint..."
+                        response=$(curl -fsS http://app.dev.svc.cluster.local/)
+                        echo "$response" | grep -q "Progressive Delivery Demo App" || exit 1
+                        
+                        echo "All checks passed!"
+                        exit 0

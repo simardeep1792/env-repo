@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: synthetic-check-script
+data:
+  check.sh: |
+    #!/bin/sh
+    set -e
+    
+    echo "Running synthetic checks..."
+    
+    # Check healthz endpoint
+    echo "Testing /healthz endpoint..."
+    response=$(curl -w "\n%{http_code}" -sS http://app.dev.svc.cluster.local/healthz)
+    status=$(echo "$response" | tail -n1)
+    if [ "$status" != "200" ]; then
+      echo "ERROR: /healthz returned status $status"
+      exit 1
+    fi
+    
+    # Check main endpoint
+    echo "Testing / endpoint..."
+    response=$(curl -w "\n%{http_code}" -sS http://app.dev.svc.cluster.local/)
+    status=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | sed '$d')
+    
+    if [ "$status" != "200" ]; then
+      echo "ERROR: / returned status $status"
+      exit 1
+    fi
+    
+    # Check for expected content
+    if ! echo "$body" | grep -q "Progressive Delivery Demo App"; then
+      echo "ERROR: Expected content not found"
+      exit 1
+    fi
+    
+    echo "All synthetic checks passed!"
+    exit 0

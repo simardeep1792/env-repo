@@ -1,0 +1,48 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: rollouts-alerts
+  labels:
+    prometheus: kube-prometheus
+spec:
+  groups:
+    - name: rollouts
+      interval: 30s
+      rules:
+        - alert: CanaryHighErrorRate
+          expr: |
+            sum(rate(nginx_ingress_controller_requests{ingress="app",status=~"5.."}[1m])) 
+            / 
+            sum(rate(nginx_ingress_controller_requests{ingress="app"}[1m])) > 0.01
+          for: 2m
+          labels:
+            severity: critical
+            component: rollouts
+          annotations:
+            summary: "High error rate detected during canary deployment"
+            description: "Error rate is {{ $value | humanizePercentage }} for ingress {{ $labels.ingress }}"
+
+        - alert: CanaryHighLatency
+          expr: |
+            histogram_quantile(
+              0.95,
+              sum by (le) (rate(http_request_duration_seconds_bucket{app="app"}[1m]))
+            ) > 0.5
+          for: 2m
+          labels:
+            severity: warning
+            component: rollouts
+          annotations:
+            summary: "High latency detected during canary deployment"
+            description: "95th percentile latency is {{ $value }}s for app {{ $labels.app }}"
+
+        - alert: AnalysisRunFailed
+          expr: |
+            argo_rollouts_analysis_run_info{phase="Failed"} == 1
+          for: 1m
+          labels:
+            severity: critical
+            component: rollouts
+          annotations:
+            summary: "Argo Rollouts Analysis Run failed"
+            description: "Analysis Run {{ $labels.name }} in namespace {{ $labels.namespace }} has failed"
