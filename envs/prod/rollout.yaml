@@ -44,7 +44,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: ghcr.io/example/progressive-delivery-app:main
+          image: ghcr.io/simardeep1792/app-repo:main
           ports:
             - containerPort: 8080
               name: http

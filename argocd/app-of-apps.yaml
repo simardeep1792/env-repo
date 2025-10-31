@@ -6,7 +6,7 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: https://github.com/example/env-repo
+    repoURL: https://github.com/simardeep1792/env-repo
     targetRevision: HEAD
     path: argocd
   destination:
@@ -25,7 +25,7 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: https://github.com/example/env-repo
+    repoURL: https://github.com/simardeep1792/env-repo
     targetRevision: HEAD
     path: infra/nginx
   destination:
@@ -44,7 +44,7 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: https://github.com/example/env-repo
+    repoURL: https://github.com/simardeep1792/env-repo
     targetRevision: HEAD
     path: infra/monitoring
   destination:
@@ -63,7 +63,7 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: https://github.com/example/env-repo
+    repoURL: https://github.com/simardeep1792/env-repo
     targetRevision: HEAD
     path: infra/rollouts
   destination:
@@ -82,7 +82,7 @@ metadata:
 spec:
   project: apps
   source:
-    repoURL: https://github.com/example/env-repo
+    repoURL: https://github.com/simardeep1792/env-repo
     targetRevision: HEAD
     path: envs/dev
   destination:
@@ -103,7 +103,7 @@ metadata:
 spec:
   project: apps
   source:
-    repoURL: https://github.com/example/env-repo
+    repoURL: https://github.com/simardeep1792/env-repo
     targetRevision: HEAD
     path: envs/prod
   destination:
