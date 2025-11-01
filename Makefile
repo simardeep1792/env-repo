@@ -1,12 +1,16 @@
-.PHONY: bootstrap bootstrap-mesh destroy pf-argocd pf-grafana status good-release bad-release
+.PHONY: bootstrap bootstrap-nginx bootstrap-no-pf destroy pf-argocd pf-grafana pf-all status good-release bad-release
 
 bootstrap:
-	@echo "Bootstrapping Progressive Delivery POC with NGINX..."
-	@./scripts/bootstrap.sh
+	@echo "Bootstrapping Progressive Delivery POC with Istio mesh and auto port-forwarding..."
+	@./scripts/bootstrap.sh --mesh --port-forward
 
-bootstrap-mesh:
-	@echo "Bootstrapping Progressive Delivery POC with Istio mesh..."
-	@./scripts/bootstrap-mesh.sh
+bootstrap-nginx:
+	@echo "Bootstrapping Progressive Delivery POC with NGINX only and auto port-forwarding..."
+	@./scripts/bootstrap.sh --port-forward
+
+bootstrap-no-pf:
+	@echo "Bootstrapping with Istio mesh without port-forwarding..."
+	@./scripts/bootstrap.sh --mesh
 
 destroy:
 	@echo "Destroying kind cluster..."
@@ -19,6 +23,10 @@ pf-argocd:
 pf-grafana:
 	@echo "Port-forwarding Grafana..."
 	@kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+
+pf-all:
+	@echo "Starting all port forwards..."
+	@./scripts/bootstrap.sh --port-forward-only
 
 status:
 	@echo "Argo CD Applications:"

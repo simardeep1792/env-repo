@@ -39,31 +39,37 @@ brew install gh  # macOS
 
 ## Quick Start
 
-### Default Profile (NGINX Ingress)
+### Default Setup (Full Stack with Istio)
 
 ```bash
-# Clone and bootstrap
+# Clone and bootstrap with automatic port forwarding
 git clone <env-repo-url>
 cd env-repo
 make bootstrap
 
-# Wait for all components to be ready (5-10 minutes)
-make status
+# Services are automatically available at:
+# - Argo CD: http://localhost:8080
+# - Grafana: http://localhost:3000
+# - Kiali: http://localhost:20001
+# - Application: http://app.localtest.me:30080
 
-# Access services
-make pf-argocd    # Argo CD at http://localhost:8080
-make pf-grafana   # Grafana at http://localhost:3000
+# Credentials will be displayed after bootstrap
 ```
 
-### Mesh Profile (Istio + Kiali)
+### Minimal Setup (NGINX Only)
 
 ```bash
-# Bootstrap with service mesh
-make bootstrap-mesh
+# Bootstrap with NGINX only (no service mesh)
+make bootstrap-nginx
+```
 
-# Additional access
-kubectl port-forward -n istio-system svc/kiali 20001:20001
-# Kiali at http://localhost:20001
+### Port Forwarding
+
+```bash
+# If port forwards die or you closed the terminal:
+make pf-all        # Start all port forwards
+make pf-argocd     # Only Argo CD
+make pf-grafana    # Only Grafana
 ```
 
 ## Access Credentials
