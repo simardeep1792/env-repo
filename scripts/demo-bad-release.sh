@@ -3,48 +3,48 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-APP_REPO_DIR="$(cd "${ROOT_DIR}/../app-repo" && pwd)"
 
-echo "Demo: Bad Release (Auto-Rollback)"
-echo "================================="
-
+echo "======================================"
+echo "Demo: Progressive Delivery - Bad Release with Rollback"
+echo "======================================"
 echo ""
-echo "Step 1: Enabling failure injection in the application..."
+echo "This demo shows automatic rollback when metrics fail"
+echo "We'll try to update to a 'bad' version that returns errors"
+echo ""
 
-# Enable failure injection in the rollout
-sed -i.bak 's/INJECT_FAILURE", value: "false"/INJECT_FAILURE", value: "true"/' "${ROOT_DIR}/envs/dev/rollout.yaml"
+echo "Step 1: Current state"
+echo "--------------------"
+kubectl get rollout app -n dev
+echo ""
+
+echo "Step 2: Updating to Red (bad) version"
+echo "------------------------------------"
+# The red version of the demo app returns 500 errors occasionally
+sed -i.bak 's|image: argoproj/rollouts-demo:[a-z]*|image: argoproj/rollouts-demo:red|' "${ROOT_DIR}/envs/dev/rollout.yaml"
 rm -f "${ROOT_DIR}/envs/dev/rollout.yaml.bak"
 
-echo "Failure injection enabled (10% of requests will return 500)"
+echo "Committing change to Git..."
+cd "${ROOT_DIR}"
+git add envs/dev/rollout.yaml
+git commit -m "demo: update app to red version (will fail)" || echo "No changes to commit"
+git push
 
 echo ""
-echo "Step 2: Simulating CI/CD pipeline..."
-echo "Building and pushing bad image..."
-BAD_TAG="demo-bad-$(date +%s)"
-echo "New image tag: ${BAD_TAG}"
-
-# Update the rollout with new image
-sed -i.bak "s|image: ghcr.io/example/progressive-delivery-app:.*|image: ghcr.io/example/progressive-delivery-app:${BAD_TAG}|" "${ROOT_DIR}/envs/dev/rollout.yaml"
-rm -f "${ROOT_DIR}/envs/dev/rollout.yaml.bak"
+echo "Step 3: ArgoCD will detect the change and start rollout"
+echo "-------------------------------------------------------"
+echo "Waiting for ArgoCD to sync..."
+sleep 10
 
 echo ""
-echo "Step 3: Applying changes (simulating PR merge)..."
-kubectl apply -f "${ROOT_DIR}/envs/dev/rollout.yaml"
-
-echo ""
-echo "Step 4: Watching rollout fail and auto-rollback..."
+echo "Step 4: Watching Progressive Rollout with Automatic Rollback"
+echo "-----------------------------------------------------------"
 echo "The rollout will:"
-echo "  - Start at 5% canary"
-echo "  - Detect high error rate (>1%)"
-echo "  - Fail analysis after 2 consecutive checks"
-echo "  - Automatically rollback to stable version"
+echo "  ⚠️  Start 5% canary"
+echo "  ❌ Detect high error rate (>1%)"
+echo "  🔄 Automatically rollback to previous stable version"
 echo ""
-echo "You should also see alerts firing in Prometheus/Grafana"
+echo "You can access the app at: http://app.localtest.me:30080"
+echo "Watch the Grafana dashboards to see error rates spike!"
 echo ""
 echo "Starting rollout watch (press Ctrl+C to stop watching)..."
 kubectl argo rollouts get rollout app -n dev --watch
-
-echo ""
-echo "Restoring good configuration for next demo..."
-sed -i.bak 's/INJECT_FAILURE", value: "true"/INJECT_FAILURE", value: "false"/' "${ROOT_DIR}/envs/dev/rollout.yaml"
-rm -f "${ROOT_DIR}/envs/dev/rollout.yaml.bak"

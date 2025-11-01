@@ -1,17 +1,17 @@
-# Progressive Delivery Environment Repository
+# Progressive Delivery Demo
 
-GitOps repository for managing Progressive Delivery infrastructure and application deployments using Argo CD, Argo Rollouts, and comprehensive monitoring.
+A complete Progressive Delivery platform demonstrating canary deployments with automated rollbacks using Argo CD and Argo Rollouts.
 
 ## Overview
 
-This repository contains all Kubernetes manifests and automation for a complete Progressive Delivery platform:
+This demo showcases enterprise-grade progressive delivery patterns:
 
-- **GitOps**: Argo CD with App of Apps pattern
-- **Progressive Rollouts**: Argo Rollouts with canary deployments
-- **Traffic Management**: NGINX Ingress (default) or Istio service mesh (optional)
-- **Monitoring**: Prometheus and Grafana with custom dashboards
-- **Automated Quality Gates**: AnalysisTemplates with rollback on failure
-- **Environments**: Dev (automated) and Prod (manual approval)
+- **GitOps**: Argo CD manages all deployments from Git
+- **Canary Deployments**: Gradual traffic shifting with Argo Rollouts
+- **Automated Rollbacks**: Metric-based quality gates trigger automatic rollbacks
+- **Full Observability**: Prometheus metrics and Grafana dashboards
+- **Traffic Management**: NGINX Ingress or Istio service mesh
+- **Zero CI/CD Complexity**: Uses public demo images for simplicity
 
 ## Prerequisites
 
@@ -30,11 +30,8 @@ curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stabl
 # Helm
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-# yq for YAML processing
+# yq for YAML processing (optional)
 go install github.com/mikefarah/yq/v4@latest
-
-# GitHub CLI (for CI integration)
-brew install gh  # macOS
 ```
 
 ## Quick Start
@@ -170,9 +167,9 @@ make good-release
 ```
 
 This demonstrates:
-1. Harmless application change
-2. Automated canary progression
-3. Successful promotion to 100%
+1. Update from `blue` to `yellow` version
+2. Automated canary progression (5% → 20% → 50% → 100%)
+3. Successful promotion based on metrics
 
 ### Failed Rollout with Auto-Rollback
 
@@ -181,10 +178,10 @@ make bad-release
 ```
 
 This demonstrates:
-1. Application with failure injection
-2. Analysis detecting high error rate
-3. Automatic rollback to stable version
-4. Alert notifications
+1. Update to `red` version (returns errors)
+2. Analysis detects high error rate at 5% canary
+3. Automatic rollback to previous stable version
+4. Prometheus alerts fire
 
 ## Environments
 
@@ -296,15 +293,22 @@ make destroy
 rm -f kubectl-argo-rollouts-*
 ```
 
-## CI/CD Integration
+## Demo Application
 
-This repository integrates with the app-repo CI/CD pipeline:
+This demo uses the official Argo Rollouts demo images:
+- `argoproj/rollouts-demo:blue` - Stable version
+- `argoproj/rollouts-demo:yellow` - Good update 
+- `argoproj/rollouts-demo:red` - Bad version (returns errors)
 
-1. App repo pushes trigger image builds
-2. CI opens PRs to this repo with new image tags
-3. Merging PRs triggers Argo CD sync
-4. Rollouts begin automatically in dev
-5. Manual promotion required for prod
+The demo app displays a colored square representing the version, making it easy to see which version is running during canary deployments.
+
+## How It Works
+
+1. **Make Changes**: Edit image tags in `envs/dev/rollout.yaml`
+2. **Commit & Push**: Git push triggers ArgoCD sync
+3. **Progressive Rollout**: Argo Rollouts manages the canary deployment
+4. **Automatic Analysis**: Prometheus metrics determine success/failure
+5. **Auto Rollback**: Failed deployments automatically revert
 
 ## Architecture Decisions
 

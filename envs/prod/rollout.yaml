@@ -44,15 +44,10 @@ spec:
     spec:
       containers:
         - name: app
-          image: ghcr.io/simardeep1792/app-repo:main
+          image: argoproj/rollouts-demo:blue
           ports:
             - containerPort: 8080
               name: http
-          env:
-            - name: VERSION
-              value: "1.0.0"
-            - name: INJECT_FAILURE
-              value: "false"
           resources:
             requests:
               cpu: 100m
