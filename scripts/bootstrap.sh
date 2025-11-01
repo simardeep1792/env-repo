@@ -144,6 +144,12 @@ echo ""
 log_info "Creating kind cluster..."
 kind create cluster --config="${ROOT_DIR}/bootstrap/kind-cluster.yaml" --wait=120s
 
+# Fix DNS for external connectivity
+log_info "Configuring DNS for external connectivity..."
+kubectl apply -f "${ROOT_DIR}/bootstrap/coredns-config.yaml"
+kubectl rollout restart deployment/coredns -n kube-system
+kubectl wait --for=condition=available deployment/coredns -n kube-system --timeout=120s
+
 # Install kube-prometheus-stack
 log_info "Installing kube-prometheus-stack..."
 helm upgrade --install kube-prometheus-stack kube-prometheus-stack \
